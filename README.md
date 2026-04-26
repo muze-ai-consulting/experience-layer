@@ -25,7 +25,7 @@ inject as structured warnings
 Built for [Claude Code](https://docs.claude.com/en/docs/claude-code/overview). Works with any setup that supports `UserPromptSubmit` hooks.
 
 ```bash
-git clone https://github.com/<you>/experience-layer ~/.claude/skills/experience-layer
+git clone https://github.com/muze-ai-consulting/experience-layer ~/.claude/skills/experience-layer
 bash ~/.claude/skills/experience-layer/install.sh
 ```
 
