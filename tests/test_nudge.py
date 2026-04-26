@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -99,6 +102,54 @@ class TestNudgeCLI(unittest.TestCase):
         result = self._run("")
         self.assertEqual(result.returncode, 0)
         self.assertEqual(result.stdout.strip(), "")
+
+
+class TestNudgeLogging(unittest.TestCase):
+    """When the nudge fires it should write to logs/nudges.jsonl. When silent, no log."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.mkdtemp(prefix="nudge-test-")
+        self.exp_home = Path(self.tmpdir) / ".claude"
+
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir, ignore_errors=True)
+
+    def _run(self, prompt_payload: str):
+        env = os.environ.copy()
+        env["EXPERIENCE_LAYER_HOME"] = str(self.exp_home)
+        return subprocess.run(
+            [sys.executable, str(ROOT / "lib" / "nudge.py")],
+            input=prompt_payload,
+            capture_output=True,
+            text=True,
+            env=env,
+        )
+
+    def _log_path(self):
+        return self.exp_home / "experience" / "logs" / "nudges.jsonl"
+
+    def test_fire_writes_log(self):
+        self._run(json.dumps({"prompt": "that's not working"}))
+        self.assertTrue(self._log_path().exists())
+        line = self._log_path().read_text().strip().splitlines()[-1]
+        entry = json.loads(line)
+        self.assertIn("ts", entry)
+        self.assertIn("prompt_hash", entry)
+        self.assertIn("context_size_in", entry)
+
+    def test_no_fire_no_log(self):
+        self._run(json.dumps({"prompt": "hello world"}))
+        # Either the log file doesn't exist, or it has no entries.
+        if self._log_path().exists():
+            self.assertEqual(self._log_path().read_text().strip(), "")
+
+    def test_log_entry_does_not_contain_prompt_text(self):
+        # Privacy: log stores hash, not raw prompt.
+        secret = "secret token abc123 should never appear"
+        self._run(json.dumps({"prompt": f"that didn't work {secret}"}))
+        contents = self._log_path().read_text()
+        self.assertNotIn(secret, contents)
+        self.assertNotIn("that didn't work", contents)
 
 
 if __name__ == "__main__":

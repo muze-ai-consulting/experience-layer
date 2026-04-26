@@ -118,37 +118,56 @@ def _detect_domains(prompt: str, available: list[str]) -> list[str]:
     return matched
 
 
-def _load_pattern(path: Path) -> dict | None:
+def _load_pattern_diagnostic(path: Path) -> tuple[dict | None, str | None]:
+    """
+    Returns (pattern, None) on successful load, or (None, reason_code) on rejection.
+
+    Reason codes (stable strings, used by lib/diag.py and /exp-status):
+      - "read_error"        — file could not be read
+      - "no_frontmatter"    — file does not start with ---
+      - "incomplete_frontmatter" — only one --- found, no closing
+      - "malformed_yaml"    — frontmatter failed to parse
+      - "frontmatter_not_dict" — top-level YAML is not a mapping
+      - "provenance_not_dict"  — provenance field exists but isn't an object
+      - "missing_provenance"   — neither url nor session_id is set
+      - "archived"          — review_status: archived
+    """
     try:
         text = path.read_text(encoding="utf-8")
     except Exception:
-        return None
+        return None, "read_error"
     if not text.lstrip().startswith("---"):
-        return None
+        return None, "no_frontmatter"
     parts = text.split("---", 2)
     if len(parts) < 3:
-        return None
+        return None, "incomplete_frontmatter"
     try:
         meta = yaml.safe_load(parts[1]) or {}
     except Exception:
-        return None
+        return None, "malformed_yaml"
     if not isinstance(meta, dict):
-        return None
+        return None, "frontmatter_not_dict"
 
     # Provenance check (anti-fabrication, per arXiv:2405.20234)
     prov = meta.get("provenance") or {}
     if not isinstance(prov, dict):
-        return None
+        return None, "provenance_not_dict"
     if not (prov.get("url") or prov.get("session_id")):
-        return None
+        return None, "missing_provenance"
 
     # Skip archived patterns
     if (meta.get("review_status") or "").lower() == "archived":
-        return None
+        return None, "archived"
 
     meta["_path"] = str(path)
     meta["_body"] = parts[2].strip()
-    return meta
+    return meta, None
+
+
+def _load_pattern(path: Path) -> dict | None:
+    """Hot-path loader. Silent on rejection — call _load_pattern_diagnostic for reasons."""
+    pattern, _reason = _load_pattern_diagnostic(path)
+    return pattern
 
 
 def _score(pattern: dict, prompt: str) -> tuple[float, list[str]]:

@@ -10,9 +10,17 @@ Quick health check on experience-layer.
 
 Gather and display:
 
-### 1. Corpus stats
-- For each domain dir under `~/.claude/experience/global/`, count `*.md` files (only count those with valid provenance — load via Python and count surviving patterns)
-- Project corpus: detect git root from cwd, count `*.md` in `<git-root>/.claude/experience/`
+### 1. Corpus stats — via lib/diag.py
+
+Run the inspection helper:
+
+```bash
+python3 ~/.claude/skills/experience-layer/lib/diag.py --json
+```
+
+This walks both global and project corpora, separating **loaded** (valid frontmatter + provenance + not archived) from **rejected** (with explicit reason codes: `missing_provenance`, `malformed_yaml`, `archived`, etc.). Use the JSON output to drive the report.
+
+**This is the answer to a real complaint** about silent failures: patterns that look correct in your editor but never fire because of (e.g.) missing provenance now show up here with a stable reason code. No more invisible misses.
 
 ### 2. Activation state
 - Hook registered? Read `~/.claude/settings.json`, check for entry pointing at `~/.claude/skills/experience-layer/hooks/claude-code.sh`
@@ -30,15 +38,18 @@ Gather and display:
 ```
 experience-layer status
 
-Corpus
-  Global:
-    power-automate:  12 patterns
-    solana:           5 patterns
-    frontend:         8 patterns
-    general:          2 patterns
-    Total global:    27 patterns
-  Project (<project-name or "no git root">):
-    Patterns:         3
+Corpus (via lib/diag.py)
+  Loaded:   27 patterns
+    global/power-automate:  12
+    global/solana:           5
+    global/frontend:         8
+    global/general:          2
+  Project (<project-name>): 3 patterns
+  Rejected: 2 patterns (silent at load — surfaced here)
+    [missing_provenance] global/solana/2025-09-old.md
+        → Neither provenance.url nor provenance.session_id is set
+    [archived] global/general/old-deprecated.md
+        → review_status is archived (intentionally skipped)
 
 Activation
   Skill installed:           ✅
@@ -50,7 +61,8 @@ Last 7 days
   Injections:       23
   Saves:            4
   False positives:  7
-  Top:
+  Nudges fired:     12
+  Top patterns:
     1. pa-2026-02-rate-limit        (8 inj)
     2. solana-2025-11-jito-bundle   (5 inj)
     3. frontend-2026-03-tailwind    (4 inj)
@@ -62,6 +74,8 @@ Useful actions
   /exp-saved <id>    → mark a warning as saved
   /exp-falsepositive <id>  → reduce a pattern's score
 ```
+
+**Always include the rejected section if any patterns were rejected.** That's the whole point of running `diag.py` — to make silence visible.
 
 ### 5. Edge cases
 

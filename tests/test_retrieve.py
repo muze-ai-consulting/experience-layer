@@ -153,6 +153,51 @@ class TestLoadPattern(unittest.TestCase):
         self.assertIsNone(retrieve._load_pattern(Path("/nonexistent/path/x.md")))
 
 
+class TestLoadPatternDiagnostic(unittest.TestCase):
+    """The diagnostic variant returns explicit rejection reasons (used by lib/diag.py)."""
+
+    def setUp(self):
+        self.fix = CorpusFixture()
+
+    def tearDown(self):
+        self.fix.cleanup()
+
+    def test_valid_returns_no_reason(self):
+        path = self.fix.write("power-automate", "v.md", VALID_PATTERN)
+        pat, reason = retrieve._load_pattern_diagnostic(path)
+        self.assertIsNotNone(pat)
+        self.assertIsNone(reason)
+
+    def test_missing_provenance_reason(self):
+        path = self.fix.write("power-automate", "p.md", PATTERN_NO_PROVENANCE)
+        pat, reason = retrieve._load_pattern_diagnostic(path)
+        self.assertIsNone(pat)
+        self.assertEqual(reason, "missing_provenance")
+
+    def test_archived_reason(self):
+        path = self.fix.write("power-automate", "a.md", PATTERN_ARCHIVED)
+        pat, reason = retrieve._load_pattern_diagnostic(path)
+        self.assertIsNone(pat)
+        self.assertEqual(reason, "archived")
+
+    def test_malformed_yaml_reason(self):
+        path = self.fix.write("power-automate", "m.md", PATTERN_MALFORMED)
+        pat, reason = retrieve._load_pattern_diagnostic(path)
+        self.assertIsNone(pat)
+        self.assertEqual(reason, "malformed_yaml")
+
+    def test_no_frontmatter_reason(self):
+        path = self.fix.write("power-automate", "n.md", PATTERN_NO_FRONTMATTER)
+        pat, reason = retrieve._load_pattern_diagnostic(path)
+        self.assertIsNone(pat)
+        self.assertEqual(reason, "no_frontmatter")
+
+    def test_read_error_reason(self):
+        pat, reason = retrieve._load_pattern_diagnostic(Path("/nonexistent/x.md"))
+        self.assertIsNone(pat)
+        self.assertEqual(reason, "read_error")
+
+
 # ---------- _kill_switch ----------
 
 

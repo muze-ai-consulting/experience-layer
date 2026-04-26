@@ -264,7 +264,7 @@ Planned (V2+):
 
 **Today this is a Claude Code skill.** The only adapter that exists is [`hooks/claude-code.sh`](hooks/claude-code.sh), which wires the core libs to Claude Code's `UserPromptSubmit` hook. The core (`lib/retrieve.py`, `lib/nudge.py`) is agent-agnostic — it reads JSON from stdin and writes markdown to stdout — but until someone writes an adapter for Cursor/Aider/Cline/Continue/etc., calling this project "agent-agnostic" would be vapor.
 
-The contract for porting to another agent is documented in [`hooks/README.md`](hooks/README.md). The actual work is usually 30-50 lines of bash or Python — all the agent-specific concerns are isolated in the adapter.
+The contract for porting to another agent is documented in [`hooks/README.md`](hooks/README.md). The stdin/stdout glue is usually 30-50 lines. The harder parts — modelling the agent's lifecycle, error handling, timeout semantics, and UX for warnings — are not free and are exactly where the contract document spends most of its words. Treat the line count as a signal of the *plumbing*, not the total cost.
 
 If you write an adapter for another agent, please open a PR.
 

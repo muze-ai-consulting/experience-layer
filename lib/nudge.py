@@ -4,12 +4,19 @@ experience-layer passive nudge.
 Detects retry / "this didn't work" signals in the user prompt and emits
 a one-line hint suggesting /exp-capture so the failure can be captured.
 Fail-open: any error → silent exit 0.
+
+Logs each fire to ~/.claude/experience/logs/nudges.jsonl so /exp-tune can
+report whether the nudge is producing signal or noise.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import re
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
 
 # Spanish + English phrases that signal "the previous turn failed and the user is retrying".
 RETRY_PATTERNS = [
@@ -58,6 +65,31 @@ def detect_retry(prompt: str) -> bool:
     return any(rx.search(prompt) for rx in COMPILED)
 
 
+def _experience_home() -> Path:
+    """Mirror retrieve.py's helper; duplicated to keep nudge.py free of yaml imports."""
+    custom = os.environ.get("EXPERIENCE_LAYER_HOME")
+    if custom:
+        return Path(custom).expanduser()
+    return Path.home() / ".claude"
+
+
+def _log_nudge(prompt: str) -> None:
+    """Append one JSONL entry per fire so /exp-tune can score signal vs noise."""
+    try:
+        log_dir = _experience_home() / "experience" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "nudges.jsonl"
+        entry = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "prompt_hash": hashlib.sha256(prompt.encode("utf-8", "ignore")).hexdigest()[:16],
+            "context_size_in": len(prompt),
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+    except Exception:
+        pass  # fail-open
+
+
 def main() -> None:
     prompt = _read_prompt()
     if detect_retry(prompt):
@@ -66,6 +98,7 @@ def main() -> None:
             "If the previous turn failed in a way you don't want to repeat, run "
             "`/exp-capture` to save the lesson._\n"
         )
+        _log_nudge(prompt)
 
 
 if __name__ == "__main__":

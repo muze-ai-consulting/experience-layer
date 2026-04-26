@@ -1,6 +1,6 @@
 # experience-layer benchmark
 
-_Run at 2026-04-26T01:05:13.260968+00:00_
+_Run at 2026-04-26T01:24:53.784402+00:00_
 
 ## Corpus
 
@@ -30,10 +30,10 @@ _30 iterations of the full retrieve.py subprocess pipeline. Includes Python inte
 
 | stat | ms |
 |---|---|
-| mean | 32.8 |
-| stdev | 1.7 |
-| min | 30.7 |
-| p50 | 32.6 |
-| p95 | 35.7 |
-| p99 | 37.7 |
-| max | 37.7 |
+| mean | 28.3 |
+| stdev | 0.7 |
+| min | 27.0 |
+| p50 | 28.5 |
+| p95 | 28.9 |
+| p99 | 29.8 |
+| max | 29.8 |

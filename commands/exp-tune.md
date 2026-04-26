@@ -22,6 +22,7 @@ Read these files; tolerate missing files:
 - `~/.claude/experience/logs/injections.jsonl`
 - `~/.claude/experience/logs/saves.jsonl`
 - `~/.claude/experience/logs/false_positives.jsonl`
+- `~/.claude/experience/logs/nudges.jsonl`
 
 Filter to entries within the last 7 days (UTC).
 
@@ -44,12 +45,19 @@ For each pattern with ≥2 injections in the window:
 ```
 experience-layer tune (last 7 days)
 
-Total injections:    23
-Saves:               4   (17%)
-False positives:     7   (30%) — high
-Active:              12 patterns
+Retrieval
+  Total injections:    23
+  Saves:               4   (17%)
+  False positives:     7   (30%) — high
+  Active patterns:     12
 
-Top injected:
+Nudge (lib/nudge.py)
+  Fired:               12 times
+  First / last:        2026-04-19 → 2026-04-26
+  Followed by /exp-capture within 5 min: 3 (25% conversion)
+  Status:              modest signal — the 75% with no follow-up are pure noise
+
+Top injected patterns:
 1. ✅ pa-2026-02-rate-limit            | 8 inj, 2 saves (25%), 1 FP — useful
 2. ⚠️  solana-2025-11-jito-bundle-tip   | 5 inj, 1 save (20%), 3 FP (60%) — noisy
 3. ❌ frontend-2026-03-tailwind-arbitrary | 4 inj, 0 saves, 2 FP — archive candidate
@@ -59,7 +67,11 @@ Recommendations:
   so it only matches bundles, not simple swaps. Apply the change?
 - Pattern #3: 4 inj, 0 saves in 7 days. Archive?
 - Pattern #1: working well. Consider duplicating to similar domains if relevant.
+- Nudge: <25% conversion to capture is below threshold. Consider tightening
+  the retry-signal regexes in lib/nudge.py if it stays low.
 ```
+
+For the nudge "followed by /exp-capture" heuristic: any nudge timestamp where a `saves.jsonl` or new pattern file's `last_seen` falls within 5 minutes counts as a conversion. Approximate but cheap. If a more accurate metric is needed, instrument `/exp-capture` to write to a `captures.jsonl` log.
 
 ### 5. Apply changes
 If the user agrees to suggestions, edit the pattern files directly. Confirm each edit with the path.
