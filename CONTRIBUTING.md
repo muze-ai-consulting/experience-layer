@@ -23,7 +23,7 @@ The reference target is Claude Code. The hook pattern (`UserPromptSubmit`-equiva
 - A short note in `README.md` under "Compatibility"
 - The setup steps for that agent
 
-Don't change the existing `hooks/pre-prompt.sh` to "support both" — keep adapters separate so each one can be tuned to the agent's actual hook format.
+Don't change the existing `hooks/claude-code.sh` to "support both" — keep adapters separate so each one can be tuned to the agent's actual hook format.
 
 ## 3. Ranking strategies
 
@@ -39,6 +39,22 @@ If you want to propose one, please:
 2. Implement as an alternative ranker the user can opt into via a config flag, **not** a replacement for the default
 3. Include a benchmark on a small sample corpus showing the delta
 
+## Tests
+
+Before opening a PR, the test suite must pass. Stdlib only — no pytest required:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+If you change the matching algorithm or scoring, also run the benchmark to confirm precision/recall hasn't regressed:
+
+```bash
+python3 benchmark/run.py
+```
+
+If you add a new feature with non-trivial behavior, add tests for it. The `tests/` directory is not aspirational — every public function in `lib/` has at least basic coverage.
+
 ## Bug reports
 
 If the hook breaks your Claude Code session: that's a P0 (the fail-open guarantee is being violated). Open an issue with:
@@ -46,7 +62,7 @@ If the hook breaks your Claude Code session: that's a P0 (the fail-open guarante
 - The exact prompt that triggered it
 - The contents of `~/.claude/experience/logs/injections.jsonl` for the affected session
 - macOS / Linux version, Python version
-- The output of `bash -x ~/.claude/skills/experience-layer/hooks/pre-prompt.sh < /tmp/your-prompt.json`
+- The output of `bash -x ~/.claude/skills/experience-layer/hooks/claude-code.sh < /tmp/your-prompt.json`
 
 ## Style
 

@@ -71,6 +71,19 @@ def _read_stdin() -> str:
     return str(data.get("prompt") or data.get("user_prompt") or "")
 
 
+def _experience_home() -> Path:
+    """
+    Root directory containing the experience/ subtree.
+    Defaults to ~/.claude. Override with EXPERIENCE_LAYER_HOME for tests
+    or multi-corpus setups. The env var should point at a directory that
+    contains (or will contain) an experience/ subdirectory.
+    """
+    custom = os.environ.get("EXPERIENCE_LAYER_HOME")
+    if custom:
+        return Path(custom).expanduser()
+    return Path.home() / ".claude"
+
+
 def _project_root() -> Path:
     cwd = Path.cwd()
     p = cwd
@@ -228,7 +241,7 @@ def _render(top: list[tuple[float, dict, list[str]]]) -> str:
 
 def _log_injection(prompt: str, injected_ids: list[str]) -> None:
     try:
-        log_dir = Path.home() / ".claude" / "experience" / "logs"
+        log_dir = _experience_home() / "experience" / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / "injections.jsonl"
         entry = {
@@ -254,8 +267,8 @@ def main() -> None:
     if _kill_switch(project_root):
         return
 
-    home = Path.home()
-    global_dir = home / ".claude" / "experience" / "global"
+    exp_home = _experience_home()
+    global_dir = exp_home / "experience" / "global"
     project_dir = project_root / ".claude" / "experience"
 
     # Discover available domains under global/

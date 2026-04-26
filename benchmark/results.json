@@ -1,0 +1,210 @@
+{
+  "ts": "2026-04-26T01:05:13.261345+00:00",
+  "corpus": {
+    "power-automate": 1,
+    "frontend": 1,
+    "solana": 1
+  },
+  "summary": {
+    "total": 20,
+    "tp": 10,
+    "fp": 0,
+    "fn": 0,
+    "tn": 10,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0
+  },
+  "cases": [
+    {
+      "prompt": "Create a Power Automate flow that runs every minute to sync data from SharePoint",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "Set up a recurrence trigger on my Power Automate flow",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "polling interval question for Power Automate scheduled flow",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "scheduled flow 1 min interval issue, what's the limit",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "I have a useEffect with an object dependency causing infinite re-renders",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "Why is my useEffect running on every render? It's an infinite loop",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "useEffect dependency array with array literal causes performance issues",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "How do I send a Jito bundle to land transactions on Solana?",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "What's the right way to use sendBundle in Jito for MEV?",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "Jito bundle submission tip account question for searcher",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip",
+      "fired": true,
+      "matched_expected": true,
+      "classification": "TP",
+      "note": null
+    },
+    {
+      "prompt": "Write a function to sort a list of integers in Python",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Explain monad transformers in Haskell",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Compose a poem about autumn evenings in Buenos Aires",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "Creative writing, no domain match"
+    },
+    {
+      "prompt": "What's the difference between TCP and UDP networking?",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Help me with a React Context value not propagating to children components",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "ADJACENT: frontend domain matches but no useEffect/infinite-loop triggers"
+    },
+    {
+      "prompt": "Solana wallet adapter integration question for my dApp frontend",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "ADJACENT: solana domain matches but no jito/bundle/tip triggers"
+    },
+    {
+      "prompt": "How do I install Power Automate Desktop on Windows?",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "ADJACENT: power-automate domain matches but no flow trigger / recurrence triggers"
+    },
+    {
+      "prompt": "Set up a SharePoint connector authentication for my workflow",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "ADJACENT: mentions SharePoint+workflow but neither flow trigger nor every-minute regex match"
+    },
+    {
+      "prompt": "Bitcoin price prediction model design with LSTM",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Configure my npm package.json scripts for testing with Vitest",
+      "should_trigger": false,
+      "expected_pattern_id": null,
+      "fired": false,
+      "matched_expected": false,
+      "classification": "TN",
+      "note": "ADJACENT: frontend-ish but no useEffect/infinite triggers"
+    }
+  ],
+  "timing": {
+    "iterations": 30,
+    "mean_ms": 32.8,
+    "stdev_ms": 1.7,
+    "min_ms": 30.7,
+    "p50_ms": 32.6,
+    "p95_ms": 35.7,
+    "p99_ms": 37.7,
+    "max_ms": 37.7
+  }
+}

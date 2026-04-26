@@ -13,7 +13,7 @@ LLMs have broad knowledge but lack iterated experience — the "I've burned myse
 
 ## Architecture (three independent pieces)
 
-1. **Hook** — `hooks/pre-prompt.sh` runs on every `UserPromptSubmit`. Calls `lib/retrieve.py` and `lib/nudge.py` with hard timeouts. Fail-open: any error → silent skip, never blocks generation.
+1. **Hook** — `hooks/claude-code.sh` runs on every `UserPromptSubmit`. Calls `lib/retrieve.py` and `lib/nudge.py` with hard timeouts (where `timeout`/`gtimeout` is available). Fail-open: any error → silent skip, never blocks generation. Other agents need their own adapter — see `hooks/README.md`.
 
 2. **Corpus** — markdown files with structured frontmatter:
    - Global: `~/.claude/experience/global/<domain>/*.md`

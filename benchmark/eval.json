@@ -1,0 +1,105 @@
+{
+  "_comment": "20 hand-labeled prompts. should_trigger=true cases name expected_pattern_id; should_trigger=false cases probe for false positives by sharing keywords with patterns without matching their actual scenario.",
+  "cases": [
+    {
+      "prompt": "Create a Power Automate flow that runs every minute to sync data from SharePoint",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit"
+    },
+    {
+      "prompt": "Set up a recurrence trigger on my Power Automate flow",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit"
+    },
+    {
+      "prompt": "polling interval question for Power Automate scheduled flow",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit"
+    },
+    {
+      "prompt": "scheduled flow 1 min interval issue, what's the limit",
+      "should_trigger": true,
+      "expected_pattern_id": "pa-2026-02-rate-limit"
+    },
+    {
+      "prompt": "I have a useEffect with an object dependency causing infinite re-renders",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop"
+    },
+    {
+      "prompt": "Why is my useEffect running on every render? It's an infinite loop",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop"
+    },
+    {
+      "prompt": "useEffect dependency array with array literal causes performance issues",
+      "should_trigger": true,
+      "expected_pattern_id": "react-2026-03-useeffect-infinite-loop"
+    },
+    {
+      "prompt": "How do I send a Jito bundle to land transactions on Solana?",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip"
+    },
+    {
+      "prompt": "What's the right way to use sendBundle in Jito for MEV?",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip"
+    },
+    {
+      "prompt": "Jito bundle submission tip account question for searcher",
+      "should_trigger": true,
+      "expected_pattern_id": "solana-2025-11-jito-bundle-tip"
+    },
+    {
+      "prompt": "Write a function to sort a list of integers in Python",
+      "should_trigger": false,
+      "_note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Explain monad transformers in Haskell",
+      "should_trigger": false,
+      "_note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Compose a poem about autumn evenings in Buenos Aires",
+      "should_trigger": false,
+      "_note": "Creative writing, no domain match"
+    },
+    {
+      "prompt": "What's the difference between TCP and UDP networking?",
+      "should_trigger": false,
+      "_note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Help me with a React Context value not propagating to children components",
+      "should_trigger": false,
+      "_note": "ADJACENT: frontend domain matches but no useEffect/infinite-loop triggers"
+    },
+    {
+      "prompt": "Solana wallet adapter integration question for my dApp frontend",
+      "should_trigger": false,
+      "_note": "ADJACENT: solana domain matches but no jito/bundle/tip triggers"
+    },
+    {
+      "prompt": "How do I install Power Automate Desktop on Windows?",
+      "should_trigger": false,
+      "_note": "ADJACENT: power-automate domain matches but no flow trigger / recurrence triggers"
+    },
+    {
+      "prompt": "Set up a SharePoint connector authentication for my workflow",
+      "should_trigger": false,
+      "_note": "ADJACENT: mentions SharePoint+workflow but neither flow trigger nor every-minute regex match"
+    },
+    {
+      "prompt": "Bitcoin price prediction model design with LSTM",
+      "should_trigger": false,
+      "_note": "Pure unrelated baseline"
+    },
+    {
+      "prompt": "Configure my npm package.json scripts for testing with Vitest",
+      "should_trigger": false,
+      "_note": "ADJACENT: frontend-ish but no useEffect/infinite triggers"
+    }
+  ]
+}

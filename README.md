@@ -106,13 +106,16 @@ experience-layer/
 ├── SKILL.md                 # Anthropic Skill metadata + activation logic
 ├── install.sh               # idempotent installer
 ├── hooks/
-│   └── pre-prompt.sh        # UserPromptSubmit hook, fail-open
+│   ├── README.md            # adapter contract for porting to other agents
+│   └── claude-code.sh       # Claude Code UserPromptSubmit adapter
 ├── lib/
-│   ├── retrieve.py          # corpus loader + ranker
-│   └── nudge.py             # passive retry-signal detector
+│   ├── retrieve.py          # corpus loader + ranker (agent-agnostic)
+│   └── nudge.py             # passive retry-signal detector (agent-agnostic)
 ├── commands/                # six slash commands (see below)
 ├── references/              # PATTERN_SPEC, RETRIEVAL, INJECTION_FORMAT
-└── examples/                # sample patterns to copy and adapt
+├── examples/                # sample patterns to copy and adapt
+├── tests/                   # unittest suite (no external deps)
+└── benchmark/               # precision/recall + timing harness
 ```
 
 The corpus lives outside the repo so your patterns can be private:
@@ -183,14 +186,25 @@ This sounds bureaucratic for what's essentially a personal corpus. It is not. Th
 
 In addition to the corpus retrieval, a tiny secondary script (`lib/nudge.py`) scans the prompt for retry / failure signals — *"that didn't work"*, *"intentemos otra vez"*, *"still broken"*, etc., bilingual — and if it sees one, suggests `/exp-capture`. Cheap to run, easy to disable, surprisingly effective at converting frustration into corpus.
 
-## Design principles
+## Design choices
 
-1. **Fail-open.** The hook never blocks generation. Any error → silent skip, never a broken session.
-2. **Provenance or it doesn't load.** No source = not injected.
-3. **Structured rules, not generic advice.** "Be careful with X" is not a fix; thresholds, configs, and steps are.
-4. **Domain-scoped, not blanket.** A Solana pattern shouldn't fire on a Power Automate prompt.
-5. **Local first.** Patterns can hold proprietary context. Corpus stays on disk, never leaves the machine.
-6. **Tunable, not magic.** Severity weights, recency decay, match thresholds are constants. Edit them.
+These are the deliberate tradeoffs. Each one closes a door — that's the point.
+
+**Keyword + regex matching, not embeddings.** V1 uses substring keyword + Python `re` regex. This is fragile to paraphrase. It's also fast (no model, no vector store), deterministic, debuggable by reading the pattern file, and scales linearly with the corpus. Patterns describe failures whose signature is mostly lexical (library names, function names, error strings, configs), so the failure mode here is narrower than it sounds. Embedding-based semantic match is V3 — adopted only if benchmark recall actually drops on real usage.
+
+**Frontmatter contract over schema validation.** Every pattern is a markdown file with YAML frontmatter. There's no schema validator that yells if you mistype a field. The loader silently rejects malformed patterns and moves on. This means a typo causes a silent miss instead of a failed install — bad for discoverability, good for fail-open. `/exp-status` and the test suite are how you catch typos.
+
+**Provenance enforced at load, not at write.** A pattern with no `url` and no `session_id` is silently dropped at load time. We don't validate when you write the file (no "save error"); we just refuse to inject it. The reason: a pattern that looks correct in your editor but never fires is a louder signal than a pattern that refuses to save.
+
+**Local-only, no daemon, no service.** The corpus is markdown on disk. There is no background process, no embedded database, no sync. Patterns can hold proprietary context safely; the cost is that there's no cross-machine sharing without you setting up your own sync (git is one option).
+
+**Hook spawns Python per prompt.** Each prompt costs one Python interpreter startup (~25ms on macOS). We considered a long-lived daemon to amortize this; rejected because (a) startup is below the noise of LLM latency anyway, (b) a daemon adds an attack surface and a failure mode, (c) the simple model is much easier to reason about.
+
+**Structured rules, not advice.** A pattern's `fix` field should contain thresholds, configs, and steps — not "be careful with X". "Be careful" doesn't help future-Claude any more than the model's prior; the value of the pattern is the *specific knowledge the model wouldn't have on its own*. This is on the human writing the pattern; nothing in the code enforces it.
+
+**Domain-scoped, not blanket.** Patterns live under `global/<domain>/` and the loader only scans relevant domains for a given prompt. A Solana pattern shouldn't fire on a Power Automate prompt. The cost: a prompt that crosses domains might miss a relevant pattern; mitigated by the `general/` domain which is always scanned.
+
+**Kill switches checked first.** Per-project file, env var, per-session env var. All checked before any corpus loading. The no-op path is under 50ms. We expect users to disable the layer per-project for sensitive work or noisy contexts; making that path cheap means people will actually use it instead of uninstalling.
 
 ## How it differs from adjacent work
 
@@ -204,13 +218,26 @@ In addition to the corpus retrieval, a tiny secondary script (`lib/nudge.py`) sc
 | Auto-growing                                            | ✗ | ✓ | per-session | semi (LLM-assisted capture) |
 | Local only / no external service                        | ✓ | ✗ | ✓ | ✓ |
 
-## Performance
+## Benchmarks
 
-- Hard timeout in hook: 2s for retrieval, 1s for nudge (where `timeout`/`gtimeout` is available)
-- Soft target: <500ms total
-- Measured on a small corpus: ~70ms
+Reproducible via [`benchmark/run.py`](benchmark/run.py). The eval set is 20 hand-labeled prompts in [`benchmark/eval.json`](benchmark/eval.json), running against the patterns in [`examples/`](examples/) (3 patterns covering Power Automate, React, Solana).
 
-If you're on macOS and want hard timeouts, install GNU coreutils: `brew install coreutils`. Without it, the hook still works — bounded by the scripts' own behavior plus the fail-open trap.
+Latest run (`python3 benchmark/run.py --iterations 50`):
+
+| metric | value |
+|---|---|
+| precision | 1.00 |
+| recall | 1.00 |
+| F1 | 1.00 |
+| mean latency | 28.4 ms |
+| p95 latency | 29.9 ms |
+| p99 latency | 30.6 ms |
+
+**Read this honestly.** The eval set is curated — 10 prompts designed to fire the patterns and 10 designed not to. Hitting 1.00 here means *the system does what it claims on a sample we picked*. Real-world precision/recall require real usage with patterns you didn't write the eval against. The synthetic benchmark catches regressions and tells you the wiring works; it does not prove the system is useful for your distribution. That's what `/exp-saved` and `/exp-falsepositive` are for.
+
+The "adjacent" negatives (5/10 of the should-not-trigger cases) intentionally share keywords with the patterns without matching their actual scenarios — e.g. *"Solana wallet adapter integration"* shares the `solana` domain with the Jito pattern but no trigger keywords. These are the ones that test whether triggers are tight enough.
+
+**Hard timeouts** in the hook: 2s for retrieve, 1s for nudge (where `timeout`/`gtimeout` is available). Without it, the hook runs without an external bound — the scripts have their own bounded behavior plus the fail-open trap. macOS users who want hard timeouts: `brew install coreutils`.
 
 ## Status
 
@@ -235,10 +262,29 @@ Planned (V2+):
 
 ## Compatibility
 
-- **Claude Code** is the reference target. Hook integrates via `UserPromptSubmit` in `~/.claude/settings.json`.
-- Other agents that expose a pre-prompt hook with stdin JSON should work with minor adjustments to the hook script.
-- macOS, Linux. Windows not tested but should work with WSL.
-- Python 3 + PyYAML are the only dependencies. Bash for the hook.
+**Today this is a Claude Code skill.** The only adapter that exists is [`hooks/claude-code.sh`](hooks/claude-code.sh), which wires the core libs to Claude Code's `UserPromptSubmit` hook. The core (`lib/retrieve.py`, `lib/nudge.py`) is agent-agnostic — it reads JSON from stdin and writes markdown to stdout — but until someone writes an adapter for Cursor/Aider/Cline/Continue/etc., calling this project "agent-agnostic" would be vapor.
+
+The contract for porting to another agent is documented in [`hooks/README.md`](hooks/README.md). The actual work is usually 30-50 lines of bash or Python — all the agent-specific concerns are isolated in the adapter.
+
+If you write an adapter for another agent, please open a PR.
+
+**Platforms**: macOS and Linux. Windows is untested; the bash adapter would need WSL or a PowerShell rewrite.
+
+**Dependencies**: Python 3.9+ and PyYAML for the libs. Bash for the Claude Code adapter. Nothing else.
+
+## Tests and benchmarks
+
+Both have zero external dependencies (stdlib only):
+
+```bash
+# Unit + integration tests (~50 tests, 0.3s)
+python3 -m unittest discover -s tests -v
+
+# Precision/recall + timing benchmark
+python3 benchmark/run.py
+```
+
+Benchmark output goes to [`benchmark/results.md`](benchmark/results.md) (human-readable) and `benchmark/results.json` (machine-readable, suitable for tracking over time).
 
 ## Contributing
 

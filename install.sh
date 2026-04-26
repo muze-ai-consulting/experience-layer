@@ -7,7 +7,8 @@ CLAUDE_HOME="$HOME/.claude"
 EXP_HOME="$CLAUDE_HOME/experience"
 COMMANDS_DIR="$CLAUDE_HOME/commands"
 SETTINGS_FILE="$CLAUDE_HOME/settings.json"
-HOOK_PATH="$SCRIPT_DIR/hooks/pre-prompt.sh"
+HOOK_PATH="$SCRIPT_DIR/hooks/claude-code.sh"
+LEGACY_HOOK_PATH="$SCRIPT_DIR/hooks/pre-prompt.sh"   # pre-v0.1.0 name; cleaned up below if present
 
 echo "🧠 Installing experience-layer..."
 echo "   Skill dir: $SCRIPT_DIR"
@@ -85,18 +86,39 @@ hooks = data.setdefault("hooks", {})
 ups = hooks.setdefault("UserPromptSubmit", [])
 
 cmd = "$HOOK_PATH"
-already = False
+legacy_cmd = "$LEGACY_HOOK_PATH"
+
+
+def is_target(value, target):
+    return isinstance(value, str) and value == target
+
+
+def entry_matches(entry, target):
+    if not isinstance(entry, dict):
+        return False
+    if is_target(entry.get("command"), target):
+        return True
+    nested = entry.get("hooks", [])
+    if isinstance(nested, list):
+        for h in nested:
+            if isinstance(h, dict) and is_target(h.get("command"), target):
+                return True
+    return False
+
+
+# Cleanup: drop pre-v0.1.0 entries pointing at the renamed hook
+removed_legacy = 0
+new_ups = []
 for entry in ups:
-    if isinstance(entry, dict):
-        # Claude Code uses {"hooks": [{"type": "command", "command": "..."}]} structure
-        nested = entry.get("hooks", [])
-        if isinstance(nested, list):
-            for h in nested:
-                if isinstance(h, dict) and h.get("command") == cmd:
-                    already = True
-                    break
-        if entry.get("command") == cmd:
-            already = True
+    if entry_matches(entry, legacy_cmd):
+        removed_legacy += 1
+        continue
+    new_ups.append(entry)
+ups[:] = new_ups
+if removed_legacy:
+    print(f"  ▸ Removed {removed_legacy} legacy entry/entries (hooks/pre-prompt.sh → hooks/claude-code.sh)")
+
+already = any(entry_matches(entry, cmd) for entry in ups)
 
 if not already:
     # Use the documented Claude Code hook structure

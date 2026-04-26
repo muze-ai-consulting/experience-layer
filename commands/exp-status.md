@@ -15,7 +15,7 @@ Gather and display:
 - Project corpus: detect git root from cwd, count `*.md` in `<git-root>/.claude/experience/`
 
 ### 2. Activation state
-- Hook registered? Read `~/.claude/settings.json`, check for entry pointing at `~/.claude/skills/experience-layer/hooks/pre-prompt.sh`
+- Hook registered? Read `~/.claude/settings.json`, check for entry pointing at `~/.claude/skills/experience-layer/hooks/claude-code.sh`
 - Global kill switch: `EXPERIENCE_LAYER` env var (use `echo $EXPERIENCE_LAYER` via Bash)
 - Project kill switch: `<git-root>/.experience-disabled` exists?
 - Skill itself installed? `~/.claude/skills/experience-layer/SKILL.md` exists?
@@ -42,7 +42,7 @@ Corpus
 
 Activation
   Skill installed:           ✅
-  Hook registered:           ✅ ~/.claude/skills/experience-layer/hooks/pre-prompt.sh
+  Hook registered:           ✅ ~/.claude/skills/experience-layer/hooks/claude-code.sh
   Global kill switch:        on (EXPERIENCE_LAYER not set to off)
   Project kill switch:       on (no .experience-disabled)
 
